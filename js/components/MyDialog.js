@@ -41,7 +41,7 @@ export default class ModalContent extends Component {
               height: 44,
               width: 0.7 * width,
               borderColor: 'rgba(0,0,0,0.4)',
-              borderWidth: 1,
+              borderWidth: StyleSheet.hairlineWidth,
               borderRadius: 8,
               marginLeft: 20,
               marginRight: 20,
@@ -75,7 +75,7 @@ export default class ModalContent extends Component {
           <TouchableOpacity
             style={stylesContent.save}
             onPress={() => {
-              let FilterName = /^[\u0391-\uFFE5A-Za-z]+$/;
+              let FilterName = /^[\u0391-\uFFE5A-Za-z]+$/
               if (!FilterName.test(this.state.text)) {
                 this.setState({
                   TextColor: true
@@ -111,7 +111,7 @@ const stylesContent = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderTopColor: 'rgba(0, 0, 0, 0.2)',
-    borderTopWidth: 1
+    borderTopWidth: StyleSheet.hairlineWidth
   },
   cancel: {
     textAlign: 'center',
@@ -119,7 +119,7 @@ const stylesContent = StyleSheet.create({
     height: 46,
     lineHeight: 46,
     borderRightColor: 'rgba(0, 0, 0, 0.2)',
-    borderRightWidth: 1,
+    borderRightWidth: StyleSheet.hairlineWidth,
     fontSize: 16,
     color: '#333333',
     alignItems: 'center',
@@ -130,7 +130,6 @@ const stylesContent = StyleSheet.create({
     textAlign: 'center',
     flex: 1,
     height: 46,
-    
     fontSize: 16,
     lineHeight: 46,
     color: '#333333',

@@ -11,7 +11,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   TextInput,
-  Dimensions
+  Dimensions,
 } from 'react-native'
 import NavigationUti from '../navigation/NavigationUtil'
 import Feather from 'react-native-vector-icons/Feather'

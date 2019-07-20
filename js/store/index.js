@@ -19,6 +19,6 @@ const middlewares = [
   thunk
 ];
 /**
- * 创建store2
+ * 创建store
  */
 export default createStore(reducers, applyMiddleware(...middlewares));
