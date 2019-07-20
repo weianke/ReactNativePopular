@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { View, Text, Button } from 'react-native';
+import { View, Text, Button, DeviceInfo } from 'react-native'
 import { connect } from 'react-redux'
 import actions from './../action/index'
 
@@ -7,7 +7,7 @@ import actions from './../action/index'
 class FavoritePage extends Component {
   render() {
     return (
-      <View>
+      <View style={{flex: 1, marginTop: 30}}>
         <Text>收藏页面</Text>
          <Button title="改变主题色" onPress={()=> {
             this.props.onThemeChange('red')

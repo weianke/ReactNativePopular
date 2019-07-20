@@ -69,7 +69,7 @@ export default class DetailPage extends Component {
       />
     )
     return (
-      <View>
+      <View style={styles.container}>
         {navigationBar}
         <WebView
           ref={webView => (this.webView = webView)}

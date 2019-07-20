@@ -11,7 +11,8 @@ import {
   Button,
   SafeAreaView,
   StyleSheet,
-  ActivityIndicator
+  ActivityIndicator,
+  DeviceInfo
 } from 'react-native'
 import Toast from 'react-native-easy-toast'
 import { connect } from 'react-redux'
@@ -72,12 +73,10 @@ class PopularPage extends Component {
       })
     )
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
-        <View style={styles.container}>
+        <View style={[styles.container, {marginTop: DeviceInfo.isIPhoneX_deprecated ? 30 : 0}]}>
           {navigationBar}
           <TabNavigator />
         </View>
-      </SafeAreaView>
     )
   }
 }
