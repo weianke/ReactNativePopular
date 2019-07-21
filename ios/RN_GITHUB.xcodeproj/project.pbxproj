@@ -5,7 +5,6 @@
 	};
 	objectVersion = 46;
 	objects = {
-
 /* Begin PBXBuildFile section */
 		00E356F31AD99517003FC87E /* RN_GITHUBTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 00E356F21AD99517003FC87E /* RN_GITHUBTests.m */; };
 		01FCD226654C47AA9212CC40 /* Octicons.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 1806560E3E4243E5AD43C467 /* Octicons.ttf */; };
