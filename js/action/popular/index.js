@@ -1,15 +1,16 @@
 import Types from '../types'
 import DataStore, { FLAG_STORAGE } from '../../expand/dao/DataStore'
-import {handleData} from '../ActionUtil'
+import { handleData, _projectModels } from '../ActionUtil'
 
 /**
  * 获取最热模块的异步action
  * @param {*} storeName
  * @param {*} url
  * @param {*} pageSize
+ * @param {*} favoriteDao
  * @returns
  */
-export function onRefreshPopular(storeName, url, pageSize) {
+export function onRefreshPopular(storeName, url, pageSize, favoriteDao) {
   return async dispatch => {
     dispatch({ type: Types.POPULAR_REFRESH, storeName: storeName }) // 首先会触发刷新的action
     let dataStore = new DataStore()
@@ -17,7 +18,14 @@ export function onRefreshPopular(storeName, url, pageSize) {
     dataStore
       .fetchData(url, FLAG_STORAGE.flag_popular)
       .then(data => {
-        handleData(Types.POPULAR_REFRESH_SUCCESS, dispatch, storeName, data, pageSize)
+        handleData(
+          Types.POPULAR_REFRESH_SUCCESS,
+          dispatch,
+          storeName,
+          data,
+          pageSize,
+          favoriteDao
+        )
       })
       .catch(error => {
         console.log(error)
@@ -44,6 +52,7 @@ export function onLoadMorePopular(
   pageIndex,
   pageSize,
   dataArray = [],
+  favoriteDao,
   callBack
 ) {
   return dispatch => {
@@ -58,20 +67,23 @@ export function onLoadMorePopular(
           type: Types.POPULAR_LOAD_MORE_FAIL,
           error: 'no more',
           storeName: storeName,
-          pageIndex: --pageIndex,
-          projectModels: dataArray
+          pageIndex: --pageIndex
         })
       } else {
         // 本次可载入的最大数量
-        let max = pageSize * pageIndex > dataArray.length ? dataArray.length : pageSize * pageIndex;
-        dispatch({
-          type: Types.POPULAR_LOAD_MORE_SUCCESS,
-          storeName,
-          pageIndex,
-          projectModels: dataArray.slice(0, max)
+        let max =
+          pageSize * pageIndex > dataArray.length
+            ? dataArray.length
+            : pageSize * pageIndex
+        _projectModels(dataArray.slice(0, max), favoriteDao, data => {
+          dispatch({
+            type: Types.POPULAR_LOAD_MORE_SUCCESS,
+            storeName,
+            pageIndex,
+            projectModels: data
+          })
         })
       }
     }, 500)
   }
 }
-

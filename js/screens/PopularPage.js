@@ -16,14 +16,18 @@ import {
 } from 'react-native'
 import Toast from 'react-native-easy-toast'
 import { connect } from 'react-redux'
+import FavoriteDao from '../expand/dao/FavoriteDao'
+import { FLAG_STORAGE } from '../expand/dao/DataStore'
 import actions from '../action/index'
 import NavigationUti from '../navigation/NavigationUtil'
 import NavigationBar from '../common/NavigationBar'
 import PopularItem from '../common/PopularItem'
+import FavoriteUtil from '../util/FavoriteUtil';
 
 const URL = 'https://api.github.com/search/repositories?q='
 const QUERY_STR = '&sort=stars'
 const THEME_COLOR = '#678'
+const favoriteDao = new FavoriteDao(FLAG_STORAGE.flag_popular)
 class PopularPage extends Component {
   constructor(props) {
     super(props)
@@ -111,12 +115,13 @@ class PopularTab extends Component {
         ++store.pageIndex,
         pageSize,
         store.items,
+        favoriteDao,
         callBack => {
           this.refs.toast.show('没有更多了')
         }
       )
     } else {
-      onRefreshPopular(this.storeName, url, pageSize)
+      onRefreshPopular(this.storeName, url, pageSize, favoriteDao)
     }
   }
 
@@ -137,6 +142,14 @@ class PopularTab extends Component {
             'DetailPage'
           )
         }}
+        onFavorite={(item, isFavorite) =>
+          FavoriteUtil.onFavorite(
+            favoriteDao,
+            item,
+            isFavorite,
+            FLAG_STORAGE.flag_popular
+          )
+        }
       />
     )
   }
@@ -200,7 +213,7 @@ class PopularTab extends Component {
           data={store.projectModels}
           //item显示的布局
           renderItem={data => this.renderItem(data)}
-          keyExtractor={item => '' + item.id}
+          keyExtractor={item => '' + item.item.id}
           refreshing={store.isLoading}
           // onRefresh={() => this.loadData()}
           ListHeaderComponent={() => this.getLoadingHeader()}
@@ -218,9 +231,19 @@ class PopularTab extends Component {
           ListFooterComponent={() => this.genIndicator()}
           onEndReached={() => {
             console.log('---onEndReached--')
-            this.loadData(true)
+             setTimeout(() => {
+               if (this.canLoadMore) {
+                 //fix 滚动时两次调用onEndReached https://github.com/facebook/react-native/issues/14015
+                 this.loadData(true)
+                 this.canLoadMore = false
+               }
+             }, 100)
           }}
           onEndReachedThreshold={0.5}
+          onMomentumScrollBegin={() => {
+            this.canLoadMore = true //fix 初始化时页调用onEndReached的问题
+            console.log('---onMomentumScrollBegin-----')
+          }}
         />
         <Toast ref={'toast'} position={'center'} />
       </View>
@@ -233,10 +256,12 @@ const mapStateToProps = state => ({
 })
 
 const mapDispatchToProps = dispatch => ({
-  onRefreshPopular: (storeName, url, pageSize) =>
-    dispatch(actions.onRefreshPopular(storeName, url, pageSize)),
-  onLoadMorePopular: (storeName, pageIndex, pageSize, items, callBack) =>
-    dispatch(actions.onLoadMorePopular(storeName, pageIndex, pageSize, items, callBack))
+  onRefreshPopular: (storeName, url, pageSize, favoriteDao) =>
+    dispatch(actions.onRefreshPopular(storeName, url, pageSize, favoriteDao)),
+  onLoadMorePopular: (storeName, pageIndex, pageSize, items, favoriteDao, callBack) =>
+    dispatch(
+      actions.onLoadMorePopular(storeName, pageIndex, pageSize, items,favoriteDao, callBack)
+    )
 })
 
 //注意：connect只是个function，并不应定非要放在export后面

@@ -22,14 +22,19 @@ import { connect } from 'react-redux'
 import actions from '../action/index'
 import NavigationUti from '../navigation/NavigationUtil'
 import NavigationBar from '../common/NavigationBar'
+import FavoriteDao from '../expand/dao/FavoriteDao'
+import { FLAG_STORAGE } from '../expand/dao/DataStore'
 import PopularItem from '../common/PopularItem'
 import TrendingDialog, {TimeSpans} from '../components/TrendingDialog'
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
+import FavoriteUtil from '../util/FavoriteUtil'
+
 
 const EVENT_TYPE_TIME_SPAN_CHANGE = 'EVENT_TYPE_TIME_SPAN_CHANGE';
 const URL = 'https://api.github.com/search/repositories?q='
 const QUERY_STR = '&sort=stars'
 const THEME_COLOR = '#678'
+const favoriteDao = new FavoriteDao(FLAG_STORAGE.flag_popular)
 
 class TrendingPage extends Component {
   constructor(props) {
@@ -151,18 +156,21 @@ const pageSize = 10 //设为常量，防止修改
 class TrendingTab extends Component {
   constructor(props) {
     super(props)
-    const { tabLabel, timeSpan} = this.props
+    const { tabLabel, timeSpan } = this.props
     this.storeName = tabLabel
     this.loading = false
-    this.timeSpan = timeSpan;
+    this.timeSpan = timeSpan
   }
 
   componentDidMount() {
     this.loadData()
-    this.timeSpanChangeListener = DeviceEventEmitter.addListener(EVENT_TYPE_TIME_SPAN_CHANGE, (timeSpan) => {
-      this.timeSpan = timeSpan;
-      this.loadData();
-    })
+    this.timeSpanChangeListener = DeviceEventEmitter.addListener(
+      EVENT_TYPE_TIME_SPAN_CHANGE,
+      timeSpan => {
+        this.timeSpan = timeSpan
+        this.loadData()
+      }
+    )
   }
 
   componentWillUnmount() {
@@ -181,38 +189,49 @@ class TrendingTab extends Component {
         ++store.pageIndex,
         pageSize,
         store.items,
+        favoriteDao,
         callBack => {
           this.refs.toast.show('没有更多了')
         }
       )
     } else {
-      onRefreshTrending(this.storeName, url, pageSize)
+      onRefreshTrending(this.storeName, url, pageSize, favoriteDao)
     }
   }
 
   genFetchUrl(key) {
-    return URL + key + QUERY_STR;
+    return URL + key + QUERY_STR
   }
 
   renderItem(data) {
     const item = data.item
-    return <PopularItem item={item} onSelect={() => {
-         NavigationUti.goPage(
-           {
-             projectModel: item
-           },
-           'DetailPage'
-         )
-    }} />
+    return (
+      <PopularItem
+        projectModel={item}
+        onSelect={() => {
+          NavigationUti.goPage(
+            {
+              projectModel: item
+            },
+            'DetailPage'
+          )
+        }}
+        onFavorite={(item, isFavorite) =>
+          FavoriteUtil.onFavorite(
+            favoriteDao,
+            item,
+            isFavorite,
+            FLAG_STORAGE.flag_popular
+          )
+        }
+      />
+    )
   }
 
-  /**
-   * 获取与当前页面有关的数据
-   * @returns {*}
-   * @private
-   */
+
   _store() {
     const { trending } = this.props
+    console.log('trending=====', trending)
     let store = trending[this.storeName]
 
     if (!store) {
@@ -265,7 +284,7 @@ class TrendingTab extends Component {
           data={store.projectModels}
           //item显示的布局
           renderItem={data => this.renderItem(data)}
-          keyExtractor={item => '' + item.id}
+          keyExtractor={item => '' + item.item.id}
           // refreshing={store.isLoading}
           // onRefresh={() => this.loadData()}
           ListHeaderComponent={() => this.getLoadingHeader()}
@@ -298,17 +317,11 @@ const mapStateToProps = state => ({
 })
 
 const mapDispatchToProps = dispatch => ({
-  onRefreshTrending: (storeName, url, pageSize) =>
-    dispatch(actions.onRefreshTrending(storeName, url, pageSize)),
-  onLoadMoreTrending: (storeName, pageIndex, pageSize, items, callBack) =>
+  onRefreshTrending: (storeName, url, pageSize, favoriteDao) =>
+    dispatch(actions.onRefreshTrending(storeName, url, pageSize, favoriteDao)),
+  onLoadMoreTrending: (storeName, pageIndex, pageSize, items, favoriteDao, callBack) =>
     dispatch(
-      actions.onLoadMoreTrending(
-        storeName,
-        pageIndex,
-        pageSize,
-        items,
-        callBack
-      )
+      actions.onLoadMoreTrending(storeName, pageIndex, pageSize, items,favoriteDao, callBack)
     )
 })
 

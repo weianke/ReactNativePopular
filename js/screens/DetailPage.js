@@ -18,8 +18,8 @@ export default class DetailPage extends Component {
     super(props)
     this.params = this.props.navigation.state.params
     const { projectModel } = this.params
-    this.url = projectModel.html_url
-    const title = projectModel.fullName || projectModel.full_name
+    this.url = projectModel.item.html_url
+    const title = projectModel.item.fullName || projectModel.item.full_name
     this.state = {
       title: title,
       url: this.url,
