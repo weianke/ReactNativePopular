@@ -1,6 +1,7 @@
 import { onThemeChange } from './theme'
 import { onRefreshPopular, onLoadMorePopular } from './popular'
-import { onRefreshTrending, onLoadMoreTrending } from './trending.js'
+import { onRefreshTrending, onLoadMoreTrending } from './trending'
+import { onLoadFavoriteData } from './favorite'
 
 
 // 默认导出根action
@@ -9,5 +10,6 @@ export default {
   onRefreshPopular,
   onLoadMorePopular,
   onRefreshTrending,
-  onLoadMoreTrending
+  onLoadMoreTrending,
+  onLoadFavoriteData
 }

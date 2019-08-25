@@ -12,6 +12,7 @@ import FontAwesome from 'react-native-vector-icons/FontAwesome'
 import ViewUtil from '../util/UtilView'
 import NavigationUti from '../navigation/NavigationUtil'
 import FavoriteDao from '../expand/dao/FavoriteDao';
+import BackPressComponent from '../common/BackPressComponent'
 
 const THEME_COLOR = '#678'
 export default class DetailPage extends Component {
@@ -28,6 +29,20 @@ export default class DetailPage extends Component {
       canGoBack: false,
       isFavorite: projectModel.isFavorite
     }
+     this.backPress = new BackPressComponent({ backPress:() => this.onBackPress() })
+  }
+
+  componentDidMount() {
+      this.backPress.componentDidMount()
+   }
+
+  componentWillUnmount() {
+      this.backPress.componentWillUnmount()
+   }
+
+  onBackPress() {
+    this.onBack()
+    return true;
   }
 
   onBack() {

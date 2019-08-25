@@ -184,30 +184,9 @@ class PopularTab extends Component {
       </View>
     )
   }
-
-  getEmpty() {
-    return (
-      <View style={styles.emptyContainer}>
-        <ActivityIndicator color="red" style={{ margin: 10 }} />
-        <Text>Loading</Text>
-      </View>
-    )
-  }
-
-  getLoadingHeader() {
-    return this._store().isLoading ? (
-      <View style={styles.indicatorContainer}>
-        <ActivityIndicator color="red" style={{ margin: 10 }} />
-        <Text>头部刷新</Text>
-      </View>
-    ) : null
-  }
-
+  
   render() {
     let store = this._store()
-    if (store.isLoading) {
-      return this.getEmpty()
-    }
     return (
       <View style={styles.container}>
         <FlatList
@@ -217,8 +196,6 @@ class PopularTab extends Component {
           renderItem={data => this.renderItem(data)}
           keyExtractor={item => '' + item.item.id}
           refreshing={store.isLoading}
-          // onRefresh={() => this.loadData()}
-          ListHeaderComponent={() => this.getLoadingHeader()}
           //下拉刷新相关
           refreshControl={
             <RefreshControl
