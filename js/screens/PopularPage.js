@@ -23,6 +23,8 @@ import NavigationUti from '../navigation/NavigationUtil'
 import NavigationBar from '../common/NavigationBar'
 import PopularItem from '../common/PopularItem'
 import FavoriteUtil from '../util/FavoriteUtil';
+import EventBus from 'react-native-event-bus'
+import EventTypes from '../util/EventTypes'
 
 const URL = 'https://api.github.com/search/repositories?q='
 const QUERY_STR = '&sort=stars'
@@ -91,143 +93,167 @@ const mapPopularStateToProps = state => ({
 
 export default connect(mapPopularStateToProps)(PopularPage)
 
+
+
 const pageSize = 10;//设为常量，防止修改
 class PopularTab extends Component {
-  constructor(props) {
-    super(props)
-    console.log('子组件props----------', props);
-    const { tabLabel } = this.props
-    this.storeName = tabLabel
-    this.loading = false
-  }
-
-  componentDidMount() {
-    this.loadData()
-  }
-
-  loadData(loadMore) {
-    const { onRefreshPopular, onLoadMorePopular } = this.props
-    const store = this._store()
-    const url = this.genFetchUrl(this.storeName) // 通过storeName 生成url
-    if (loadMore) {
-      onLoadMorePopular(
-        this.storeName,
-        ++store.pageIndex,
-        pageSize,
-        store.items,
-        favoriteDao,
-        callBack => {
-          this.refs.toast.show('没有更多了')
-        }
-      )
-    } else {
-      onRefreshPopular(this.storeName, url, pageSize, favoriteDao)
+    constructor(props) {
+        super(props)
+        console.log('子组件props----------', props)
+        const { tabLabel } = this.props
+        this.storeName = tabLabel
+        this.loading = false
+        this.isFavoriteChanged = false
     }
-  }
 
-  genFetchUrl(key) {
-    return URL + key + QUERY_STR
-  }
-
-  renderItem(data) {
-    const item = data.item
-    return (
-      <PopularItem
-        projectModel={item}
-        onSelect={(callback) => {
-          NavigationUti.goPage(
-            {
-              projectModel: item,
-              flag: FLAG_STORAGE.flag_popular,
-              callback,
-            },
-            'DetailPage'
-          )
-        }}
-        onFavorite={(item, isFavorite) =>
-          FavoriteUtil.onFavorite(
-            favoriteDao,
-            item,
-            isFavorite,
-            FLAG_STORAGE.flag_popular
-          )
-        }
-      />
-    )
-  }
-
-  /**
-   * 获取与当前页面有关的数据
-   * @returns {*}
-   * @private
-   */
-  _store() {
-    const { popular } = this.props
-    let store = popular[this.storeName]
-
-    if (!store) {
-      store = {
-        items: [],
-        isLoading: false,
-        projectModels: [], //要显示的数据
-        hideLoadingMore: true //默认隐藏加载更多
-      }
+    componentDidMount() {
+        this.loadData()
+        EventBus.getInstance().addListener(
+            EventTypes.favorite_changed_popular,
+            (this.favoriteChangeListener = data => {
+                this.isFavoriteChanged = true
+            })
+        )
+        EventBus.getInstance().addListener(
+            EventTypes.bottom_tab_select,
+            (this.bottomTabSelectListener = data => {
+                if (data.to === 0 && this.isFavoriteChanged) {
+                    this.loadData(null, true)
+                }
+            })
+        )
     }
-    return store
-  }
 
-  genIndicator() {
-    return this._store().hideLoadingMore ? null : (
-      <View style={styles.indicatorContainer}>
-        <ActivityIndicator color="red" style={{ margin: 10 }} />
-        <Text>正在加载更多</Text>
-      </View>
-    )
-  }
-  
-  render() {
-    let store = this._store()
-    return (
-      <View style={styles.container}>
-        <FlatList
-          // 数据源
-          data={store.projectModels}
-          //item显示的布局
-          renderItem={data => this.renderItem(data)}
-          keyExtractor={item => '' + item.item.id}
-          refreshing={store.isLoading}
-          //下拉刷新相关
-          refreshControl={
-            <RefreshControl
-              title={'Loading'}
-              titleColor={THEME_COLOR}
-              colors={[THEME_COLOR]}
-              refreshing={store.isLoading}
-              onRefresh={() => this.loadData()}
-              tintColor={THEME_COLOR}
+    componentWillUnmount() {
+        EventBus.getInstance().removeListener(this.favoriteChangeListener)
+        EventBus.getInstance().removeListener(this.bottomTabSelectListener)
+    }
+
+    loadData(loadMore, refreshFavorite) {
+        const { onRefreshPopular, onLoadMorePopular, onFlushPopularFavorite} = this.props
+        const store = this._store()
+        const url = this.genFetchUrl(this.storeName) // 通过storeName 生成url
+        if (loadMore) {
+            onLoadMorePopular(
+                this.storeName,
+                ++store.pageIndex,
+                pageSize,
+                store.items,
+                favoriteDao,
+                callBack => {
+                    this.refs.toast.show('没有更多了')
+                }
+            )
+        } else if (refreshFavorite) {
+            onFlushPopularFavorite(this.storeName, store.pageIndex, pageSize, store.items, favoriteDao);
+        }else {
+            onRefreshPopular(this.storeName, url, pageSize, favoriteDao)
+        }
+    }
+
+    genFetchUrl(key) {
+        return URL + key + QUERY_STR
+    }
+
+    renderItem(data) {
+        const item = data.item
+        return (
+            <PopularItem
+                projectModel={item}
+                onSelect={callback => {
+                    NavigationUti.goPage(
+                        {
+                            projectModel: item,
+                            flag: FLAG_STORAGE.flag_popular,
+                            callback
+                        },
+                        'DetailPage'
+                    )
+                }}
+                onFavorite={(item, isFavorite) =>
+                    FavoriteUtil.onFavorite(
+                        favoriteDao,
+                        item,
+                        isFavorite,
+                        FLAG_STORAGE.flag_popular
+                    )
+                }
             />
-          }
-          ListFooterComponent={() => this.genIndicator()}
-          onEndReached={() => {
-            console.log('---onEndReached--')
-             setTimeout(() => {
-               if (this.canLoadMore) {
-                 //fix 滚动时两次调用onEndReached https://github.com/facebook/react-native/issues/14015
-                 this.loadData(true)
-                 this.canLoadMore = false
-               }
-             }, 100)
-          }}
-          onEndReachedThreshold={0.5}
-          onMomentumScrollBegin={() => {
-            this.canLoadMore = true //fix 初始化时页调用onEndReached的问题
-            console.log('---onMomentumScrollBegin-----')
-          }}
-        />
-        <Toast ref={'toast'} position={'center'} />
-      </View>
-    )
-  }
+        )
+    }
+
+    /**
+     * 获取与当前页面有关的数据
+     * @returns {*}
+     * @private
+     */
+    _store() {
+        const { popular } = this.props
+        let store = popular[this.storeName]
+
+        if (!store) {
+            store = {
+                items: [],
+                isLoading: false,
+                projectModels: [], //要显示的数据
+                hideLoadingMore: true //默认隐藏加载更多
+            }
+        }
+        return store
+    }
+
+    genIndicator() {
+        return this._store().hideLoadingMore ? null : (
+            <View style={styles.indicatorContainer}>
+                <ActivityIndicator color="red" style={{ margin: 10 }} />
+                <Text>正在加载更多</Text>
+            </View>
+        )
+    }
+
+    render() {
+        let store = this._store()
+        return (
+            <View style={styles.container}>
+                <FlatList
+                    // 数据源
+                    data={store.projectModels}
+                    //item显示的布局
+                    renderItem={data => this.renderItem(data)}
+                    keyExtractor={item => '' + item.item.id}
+                    refreshing={store.isLoading}
+                    //下拉刷新相关
+                    refreshControl={
+                        <RefreshControl
+                            title={'Loading'}
+                            titleColor={THEME_COLOR}
+                            colors={[THEME_COLOR]}
+                            refreshing={store.isLoading}
+                            onRefresh={() => this.loadData()}
+                            tintColor={THEME_COLOR}
+                        />
+                    }
+                    ListFooterComponent={() => this.genIndicator()}
+                    onEndReached={() => {
+                        console.log('---onEndReached--')
+                        setTimeout(() => {
+                            if (this.canLoadMore) {
+                                //fix 滚动时两次调用onEndReached https://github.com/facebook/react-native/issues/14015
+                                this.loadData(true)
+                                this.canLoadMore = false
+                            }
+                        }, 100)
+                    }}
+                    onEndReachedThreshold={0.5}
+                    onMomentumScrollBegin={() => {
+                        this.canLoadMore = true //fix 初始化时页调用onEndReached的问题
+                        console.log('---onMomentumScrollBegin-----')
+                    }}
+                />
+                <Toast ref={'toast'} position={'center'} />
+            </View>
+        )
+    }
 }
 const mapStateToProps = state => ({
   popular: state.popular,
@@ -240,7 +266,8 @@ const mapDispatchToProps = dispatch => ({
   onLoadMorePopular: (storeName, pageIndex, pageSize, items, favoriteDao, callBack) =>
     dispatch(
       actions.onLoadMorePopular(storeName, pageIndex, pageSize, items,favoriteDao, callBack)
-    )
+    ),
+    onFlushPopularFavorite: (storeName, pageIndex, pageSize, items, favoriteDao) => dispatch(actions.onFlushPopularFavorite(storeName, pageIndex, pageSize, items, favoriteDao)),
 })
 
 //注意：connect只是个function，并不应定非要放在export后面

@@ -1,9 +1,9 @@
 import {
-  createStackNavigator,
-  createMaterialTopTabNavigator,
-  createBottomTabNavigator,
-  createSwitchNavigator,
-  createAppContainer
+    createStackNavigator,
+    createMaterialTopTabNavigator,
+    createBottomTabNavigator,
+    createSwitchNavigator,
+    createAppContainer
 } from 'react-navigation'
 import welcomePage from '../screens/welcomePage'
 import HomePage from '../screens/HomePage'
@@ -11,66 +11,69 @@ import DetailPage from '../screens/DetailPage'
 import FetchDemoPage from '../screens/FetchDemoPage'
 import AsyncStoragePage from '../screens/AsyncStoragePage'
 import DataStoreDemo from '../screens/DataStoreDemo'
-import {connect} from 'react-redux'
-import {createReactNavigationReduxMiddleware, reduxifyNavigator} from 'react-navigation-redux-helpers';
+import { connect } from 'react-redux'
+import {
+    createReactNavigationReduxMiddleware,
+    reduxifyNavigator
+} from 'react-navigation-redux-helpers'
 
-export const rootCom = 'Init';//设置根路由
+export const rootCom = 'Init' //设置根路由
 
 const InitNavigator = createStackNavigator({
-  welcomePage: {
-    screen: welcomePage,
-    navigationOptions: {
-      header: null
+    welcomePage: {
+        screen: welcomePage,
+        navigationOptions: {
+            header: null
+        }
     }
-  }
 })
 
 const MainNavigator = createStackNavigator({
-  HomePage: {
-    screen: HomePage,
-    navigationOptions: {
-      header: null
+    HomePage: {
+        screen: HomePage,
+        navigationOptions: {
+            header: null
+        }
+    },
+    DetailPage: {
+        screen: DetailPage,
+        navigationOptions: {
+            header: null
+        }
+    },
+    FetchDemoPage: {
+        screen: FetchDemoPage,
+        navigationOptions: {
+            // header: null
+        }
+    },
+    AsyncStoragePage: {
+        screen: AsyncStoragePage,
+        navigationOptions: {
+            // header: null
+        }
+    },
+    DataStoreDemo: {
+        screen: DataStoreDemo,
+        navigationOptions: {
+            // header: null
+        }
     }
-  },
-  DetailPage: {
-    screen: DetailPage,
-    navigationOptions: {
-      header: null
-    }
-  },
-  FetchDemoPage: {
-    screen: FetchDemoPage,
-    navigationOptions: {
-      // header: null
-    }
-  },
-  AsyncStoragePage: {
-    screen: AsyncStoragePage,
-    navigationOptions: {
-      // header: null
-    }
-  },
-  DataStoreDemo: {
-    screen: DataStoreDemo,
-    navigationOptions: {
-      // header: null
-    }
-  }
 })
 
 // 初始化导航是启动页面，只加载一次，无法返回，Main区域是主要内容
 export const RootNavigator = createAppContainer(
-  createSwitchNavigator(
-    {
-      Init: InitNavigator,
-      Main: MainNavigator
-    },
-    {
-      navigationOptions: {
-        header: null // 可以通过将header设为null 来禁用StackNavigator的Navigation Bar
-      }
-    }
-  )
+    createSwitchNavigator(
+        {
+            Init: InitNavigator,
+            Main: MainNavigator
+        },
+        {
+            navigationOptions: {
+                header: null // 可以通过将header设为null 来禁用StackNavigator的Navigation Bar
+            }
+        }
+    )
 )
 
 /**
@@ -83,23 +86,23 @@ export const RootNavigator = createAppContainer(
 export const middleware = createReactNavigationReduxMiddleware(
     'root',
     state => state.nav
-);
+)
 
 /**
  * 2.将根导航器组件传递给 reduxifyNavigator 函数,
  * 并返回一个将navigation state 和 dispatch 函数作为 props的新组件；
  * 注意：要在createReactNavigationReduxMiddleware之后执行
  */
-const AppWithNavigationState = reduxifyNavigator(RootNavigator, 'root');
+const AppWithNavigationState = reduxifyNavigator(RootNavigator, 'root')
 
 /**
  * State到Props的映射关系
  * @param state
  */
 const mapStateToProps = state => ({
-    state: state.nav,//v2
-});
+    state: state.nav //v2
+})
 /**
  * 3.连接 React 组件与 Redux store
  */
-export default connect(mapStateToProps)(AppWithNavigationState);
+export default connect(mapStateToProps)(AppWithNavigationState)
